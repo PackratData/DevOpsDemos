@@ -1,0 +1,28 @@
+# This is intended to be used by a playbook for looping over a block of tasks
+#
+# VERSION 2020-08-21
+#
+# This task:
+# - Creates Route 53 Record Set(s) within a Hosted Zone
+# https://docs.ansible.com/ansible/latest/modules/route53_facts_module.html
+# https://docs.ansible.com/ansible/latest/modules/route53_zone_module.html
+#
+# Create a "Simple" Routing policy with an "A" record that routes traffic to an existing record
+- name: Set fact for new 'dns_name' from subdomain '{{ item }}'"
+  set_fact:
+    dns_name: "{{ item }}.{{ env.route53.hosted_zone.domain_name }}"
+
+- debug:
+    msg: "AWS dns_name is: {{ dns_name }}"
+
+- name: "Add route53 record for '{{ dns_name }}'"
+  route53:
+    command: create
+    # "overwrite=yes" to replace existing record or need to update ansible script so it first checks for existing records
+    overwrite: yes
+    zone: "{{ env.route53.hosted_zone.domain_name }}"
+    record: "{{ dns_name }}"
+    type: A
+    value: "api.dev.lift.{{ env.route53.hosted_zone.domain_name }}"
+    alias: True
+    alias_hosted_zone_id: "{{ env.route53.hosted_zone.id }}"
