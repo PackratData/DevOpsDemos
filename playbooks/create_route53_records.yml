@@ -1,0 +1,32 @@
+# Running Playbook
+# $ ansible-playbook playbooks/create_route53_records.yml -i group_vars/aws/aws_route53_records.yml --extra-vars @inventories/aws_route53_records.yml --check
+#
+# VERSION 2020-08-21
+#
+# This playbook:
+# - Creates Route 53 Record Set(s) within a Hosted Zone
+# https://docs.ansible.com/ansible/latest/modules/route53_facts_module.html
+# https://docs.ansible.com/ansible/latest/modules/route53_zone_module.html
+#
+# Create a "Simple" Routing policy with an "A" record that routes traffic to an existing record
+# IMPORTANT: This ansible script DOES NOT DELETE Route 53 subdomains NOT LISTED in file: /simple_configs/route53_subdomains.txt
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars_files:
+    - "./group_vars/aws_route53_records.yml"
+
+  tasks:
+
+    - name: "Fetch list of subdomains from a file"
+      command: cat ../simple_configs/route53_subdomains.txt
+      check_mode: no
+      register: my_subdomains
+
+    - debug:
+        msg: "Create subdomains for {{ my_subdomains.stdout_lines }}"
+
+    - name: "Manage the Hosted Zone '{{ env.route53.hosted_zone.domain_name }}'"
+      include_tasks: tasks/configure_route53_record.yml
+      loop: "{{ my_subdomains.stdout_lines }}"
