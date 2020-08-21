@@ -1,0 +1,44 @@
+# Running Playbook
+# $ ansible-playbook playbooks/create_route53_record.yml -i group_vars/aws/aws_route53_records.yml --extra-vars @inventories/aws_route53_records.yml --check
+#
+# VERSION 2020-08-20
+#
+# This playbook:
+# - Creates Route 53 Record Set(s) within a Hosted Zone
+# https://docs.ansible.com/ansible/latest/modules/route53_facts_module.html
+# https://docs.ansible.com/ansible/latest/modules/route53_zone_module.html
+#
+# Create a "Simple" Routing policy with an "A" record that routes traffic to an existing record
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars_files:
+    - "./group_vars/aws_route53_records.yml"
+
+  tasks:
+
+    - name: "Set subdomain prefix"
+      set_fact:
+        subdomain_prefix: "demodns03"
+
+    - name: "Manage the Hosted Zone '{{ env.route53.hosted_zone.domain_name }}'"
+      block:
+
+        - name: Set new 'dns_name'
+          set_fact:
+            dns_name: "{{ subdomain_prefix }}.{{ env.route53.hosted_zone.domain_name }}"
+
+        - debug:
+            msg: "AWS dns_name is: {{ dns_name }}"
+
+        - name: "Add route53 record for '{{ dns_name }}'"
+          route53:
+            command: create
+            # overwrite: yes
+            zone: "{{ env.route53.hosted_zone.domain_name }}"
+            record: "{{ dns_name }}"
+            type: A
+            value: "api.dev.lift.{{ env.route53.hosted_zone.domain_name }}"
+            alias: True
+            alias_hosted_zone_id: "{{ env.route53.hosted_zone.id }}"
