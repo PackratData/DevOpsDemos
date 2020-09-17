@@ -14,9 +14,6 @@
   connection: local
   gather_facts: yes
 
-  vars_files:
-    - "./group_vars/aws_route53_records.yml"
-
   tasks:
 
     - name: "Fetch list of subdomains from a file"
