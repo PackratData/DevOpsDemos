@@ -1,7 +1,0 @@
----
-# AWS settings
-# Route53 settings
-debug:
-  msg: "Load group_vars aws_route53_records.yml"
-route53:
-  domain_name: "packratdata-cloud.com"
